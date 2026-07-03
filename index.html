@@ -1,0 +1,1851 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Lorenz Imperial</title>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;0,900;1,400;1,700&family=Inter:wght@100;200;300;400;500&family=Space+Mono:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet"/>
+  <style>
+    *, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
+
+    :root {
+      --black:   #080808;
+      --deep:    #0e0e0e;
+      --card:    #111111;
+      --card2:   #141414;
+      --red:     #c0001a;
+      --red2:    #e0001f;
+      --wine:    #6b1d2a;
+      --wine2:   #8c2535;
+      --wine3:   #a83040;
+      --text:    #d8d8d8;
+      --muted:   #555;
+      --border:  #1e1e1e;
+      --border2: #2a2a2a;
+    }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      background: var(--black);
+      color: var(--text);
+      font-family: 'Inter', sans-serif;
+      font-weight: 300;
+      line-height: 1.8;
+      overflow-x: hidden;
+      cursor: none;
+    }
+
+    /* ── CUSTOM CURSOR ── */
+    .cursor {
+      position: fixed;
+      width: 10px; height: 10px;
+      background: var(--red);
+      border-radius: 50%;
+      pointer-events: none;
+      z-index: 9999;
+      transform: translate(-50%,-50%);
+      transition: transform 0.1s, width 0.3s, height 0.3s, background 0.3s;
+      mix-blend-mode: difference;
+    }
+    .cursor-ring {
+      position: fixed;
+      width: 36px; height: 36px;
+      border: 1px solid var(--wine3);
+      border-radius: 50%;
+      pointer-events: none;
+      z-index: 9998;
+      transform: translate(-50%,-50%);
+      transition: transform 0.18s ease, width 0.3s, height 0.3s, opacity 0.3s;
+      opacity: 0.6;
+    }
+
+    /* ── SCROLLBAR ── */
+    ::-webkit-scrollbar { width: 3px; }
+    ::-webkit-scrollbar-track { background: var(--black); }
+    ::-webkit-scrollbar-thumb { background: linear-gradient(var(--red), var(--wine)); }
+
+    /* ── LOADER ── */
+    #loader {
+      position: fixed;
+      inset: 0;
+      z-index: 9999;
+      background: var(--black);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 2rem;
+      transition: opacity 0.6s ease, visibility 0.6s ease;
+    }
+
+    #loader.hidden {
+      opacity: 0;
+      visibility: hidden;
+      pointer-events: none;
+    }
+
+    .loader-name {
+      font-family: 'Playfair Display', serif;
+      font-size: clamp(1.5rem, 5vw, 2.5rem);
+      font-weight: 900;
+      font-style: italic;
+      color: #fff;
+      letter-spacing: 0.05em;
+      overflow: hidden;
+    }
+
+    .loader-name span {
+      display: inline-block;
+      opacity: 0;
+      transform: translateY(30px);
+      animation: letterIn 0.5s forwards;
+    }
+
+    .loader-name .red { color: var(--red); }
+
+    @keyframes letterIn {
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .loader-bar-wrap {
+      width: 180px;
+      height: 1px;
+      background: var(--border2);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .loader-bar {
+      position: absolute;
+      top: 0; left: 0;
+      height: 100%;
+      width: 0%;
+      background: linear-gradient(90deg, var(--wine), var(--red));
+      animation: barFill 1.8s cubic-bezier(0.4,0,0.2,1) forwards;
+    }
+
+    @keyframes barFill {
+      0%   { width: 0%; }
+      60%  { width: 80%; }
+      100% { width: 100%; }
+    }
+
+    .loader-label {
+      font-family: 'Space Mono', monospace;
+      font-size: 0.6rem;
+      letter-spacing: 0.4em;
+      text-transform: uppercase;
+      color: var(--muted);
+      animation: fadeInUp 0.5s 0.3s forwards;
+      opacity: 0;
+    }
+
+    @keyframes fadeInUp {
+      to { opacity: 1; transform: translateY(0); }
+      from { opacity: 0; transform: translateY(8px); }
+    }
+
+    .loader-counter {
+      font-family: 'Space Mono', monospace;
+      font-size: 0.65rem;
+      color: var(--wine3);
+      letter-spacing: 0.2em;
+      animation: fadeInUp 0.5s 0.3s forwards;
+      opacity: 0;
+    }
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");
+      pointer-events: none;
+      z-index: 9990;
+      opacity: 0.35;
+    }
+
+    /* ── HERO ── */
+    .hero {
+      position: relative;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      padding: 2rem;
+      overflow: hidden;
+      background: var(--black);
+    }
+
+    .hero-bg-lines {
+      position: absolute;
+      inset: 0;
+      background-image:
+        linear-gradient(rgba(107,29,42,0.08) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(107,29,42,0.08) 1px, transparent 1px);
+      background-size: 60px 60px;
+      animation: gridMove 20s linear infinite;
+    }
+
+    @keyframes gridMove {
+      0% { transform: translateY(0); }
+      100% { transform: translateY(60px); }
+    }
+
+    .hero-glow {
+      position: absolute;
+      width: 600px; height: 600px;
+      background: radial-gradient(circle, rgba(192,0,26,0.12) 0%, transparent 70%);
+      border-radius: 50%;
+      animation: glowPulse 4s ease-in-out infinite;
+    }
+
+    @keyframes glowPulse {
+      0%, 100% { transform: scale(1); opacity: 0.6; }
+      50% { transform: scale(1.15); opacity: 1; }
+    }
+
+    .hero-content { position: relative; z-index: 2; }
+
+    .hero-eyebrow {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.6rem;
+      font-family: 'Space Mono', monospace;
+      font-size: 0.65rem;
+      letter-spacing: 0.45em;
+      text-transform: uppercase;
+      color: var(--wine3);
+      margin-bottom: 2rem;
+    }
+
+    .hero-eyebrow::before,
+    .hero-eyebrow::after {
+      content: '';
+      display: inline-block;
+      width: 30px; height: 1px;
+      background: var(--wine);
+    }
+
+    .hero-name {
+      font-family: 'Playfair Display', serif;
+      font-weight: 900;
+      font-size: clamp(4rem, 12vw, 10rem);
+      line-height: 0.9;
+      letter-spacing: -0.02em;
+      color: #fff;
+      position: relative;
+    }
+
+    .hero-name .line1 { display: block; }
+
+    .hero-name .line2 {
+      display: block;
+      color: transparent;
+      -webkit-text-stroke: 1px var(--red);
+      font-style: italic;
+    }
+
+    .hero-name .red-dot {
+      color: var(--red);
+      -webkit-text-stroke: 0;
+    }
+
+    .hero-tagline {
+      margin-top: 2rem;
+      font-family: 'Space Mono', monospace;
+      font-size: 0.7rem;
+      letter-spacing: 0.3em;
+      text-transform: uppercase;
+      color: var(--muted);
+    }
+
+    .hero-tagline span { color: var(--wine3); }
+
+    .hero-scroll {
+      position: absolute;
+      bottom: 2.5rem;
+      left: 50%;
+      transform: translateX(-50%);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0.5rem;
+      z-index: 2;
+    }
+
+    .hero-scroll-line {
+      width: 1px; height: 60px;
+      background: linear-gradient(var(--wine), transparent);
+      animation: scrollLine 2s ease-in-out infinite;
+    }
+
+    @keyframes scrollLine {
+      0% { transform: scaleY(0); transform-origin: top; }
+      50% { transform: scaleY(1); transform-origin: top; }
+      51% { transform: scaleY(1); transform-origin: bottom; }
+      100% { transform: scaleY(0); transform-origin: bottom; }
+    }
+
+    .hero-scroll-text {
+      font-family: 'Space Mono', monospace;
+      font-size: 0.55rem;
+      letter-spacing: 0.4em;
+      text-transform: uppercase;
+      color: var(--muted);
+      writing-mode: vertical-rl;
+    }
+
+    /* ── NAV ── */
+    nav {
+      position: fixed;
+      top: 0; left: 0; right: 0;
+      z-index: 100;
+      padding: 0 3rem;
+      height: 64px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: rgba(8,8,8,0.85);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--border);
+      transition: background 0.4s, border-color 0.4s;
+    }
+
+    nav.scrolled {
+      background: rgba(8,8,8,0.97);
+      border-color: var(--border2);
+    }
+
+    .nav-logo {
+      font-family: 'Playfair Display', serif;
+      font-size: 1.2rem;
+      font-weight: 900;
+      font-style: italic;
+      color: #fff;
+      text-decoration: none;
+      letter-spacing: 0.02em;
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+    }
+
+    .nav-logo span { color: var(--red); }
+
+    .nav-links {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      list-style: none;
+    }
+
+    .nav-links a {
+      font-family: 'Space Mono', monospace;
+      font-size: 0.6rem;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: var(--muted);
+      text-decoration: none;
+      padding: 0.4rem 0.8rem;
+      border: 1px solid transparent;
+      transition: color 0.3s, border-color 0.3s;
+    }
+
+    .nav-links a:hover {
+      color: #fff;
+      border-color: var(--border2);
+    }
+
+    .nav-links a.active {
+      color: var(--wine3);
+      border-color: var(--wine);
+    }
+
+    .nav-links a.nav-portfolio {
+      color: var(--wine3);
+      border-color: var(--wine);
+    }
+
+    .nav-links a.nav-portfolio:hover {
+      color: #fff;
+      border-color: var(--red);
+      background: rgba(192,0,26,0.08);
+    }
+
+    /* ── HAMBURGER ── */
+    .nav-hamburger {
+      display: none;
+      flex-direction: column;
+      justify-content: center;
+      gap: 5px;
+      width: 32px; height: 32px;
+      background: none;
+      border: none;
+      cursor: pointer;
+      padding: 0;
+      z-index: 200;
+    }
+
+    .nav-hamburger span {
+      display: block;
+      width: 100%; height: 1px;
+      background: #fff;
+      transition: transform 0.35s ease, opacity 0.35s ease, width 0.35s ease;
+      transform-origin: center;
+    }
+
+    .nav-hamburger.open span:nth-child(1) { transform: translateY(6px) rotate(45deg); }
+    .nav-hamburger.open span:nth-child(2) { opacity: 0; width: 0; }
+    .nav-hamburger.open span:nth-child(3) { transform: translateY(-6px) rotate(-45deg); }
+
+    /* ── MOBILE MENU ── */
+    .nav-mobile {
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: var(--black);
+      z-index: 150;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 0;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.4s ease;
+    }
+
+    .nav-mobile.open {
+      opacity: 1;
+      pointer-events: all;
+    }
+
+    .nav-mobile-link {
+      font-family: 'Playfair Display', serif;
+      font-size: clamp(2rem, 8vw, 3.5rem);
+      font-weight: 900;
+      font-style: italic;
+      color: var(--border2);
+      text-decoration: none;
+      padding: 0.6rem 2rem;
+      width: 100%;
+      text-align: center;
+      border-bottom: 1px solid var(--border);
+      transition: color 0.3s, padding-left 0.3s;
+      display: block;
+    }
+
+    .nav-mobile-link:first-child { border-top: 1px solid var(--border); }
+
+    .nav-mobile-link:hover {
+      color: #fff;
+      padding-left: 3rem;
+    }
+
+    .nav-mobile-num {
+      font-family: 'Space Mono', monospace;
+      font-size: 0.55rem;
+      color: var(--red);
+      letter-spacing: 0.3em;
+      vertical-align: super;
+      margin-right: 0.5rem;
+    }
+
+    .nav-mobile-footer {
+      position: absolute;
+      bottom: 2rem;
+      font-family: 'Space Mono', monospace;
+      font-size: 0.6rem;
+      letter-spacing: 0.3em;
+      text-transform: uppercase;
+      color: var(--muted);
+    }
+
+    @media (max-width: 768px) {
+      nav { padding: 0 1.5rem; }
+      .nav-links { display: none; }
+      .nav-hamburger { display: flex; }
+    }
+
+    /* ── SECTION WRAPPER ── */
+    .section-wrap {
+      position: relative;
+      padding: 8rem 2rem;
+      max-width: 1100px;
+      margin: 0 auto;
+    }
+
+    .section-number {
+      position: absolute;
+      top: 6rem; right: 2rem;
+      font-family: 'Playfair Display', serif;
+      font-size: clamp(6rem, 12vw, 10rem);
+      font-weight: 900;
+      color: transparent;
+      -webkit-text-stroke: 1px var(--border2);
+      line-height: 1;
+      pointer-events: none;
+      user-select: none;
+    }
+
+    .section-tag {
+      font-family: 'Space Mono', monospace;
+      font-size: 0.6rem;
+      letter-spacing: 0.5em;
+      text-transform: uppercase;
+      color: var(--red);
+      margin-bottom: 0.8rem;
+    }
+
+    h2 {
+      font-family: 'Playfair Display', serif;
+      font-size: clamp(2.2rem, 5vw, 3.5rem);
+      font-weight: 900;
+      color: #fff;
+      line-height: 1.1;
+      margin-bottom: 0.5rem;
+    }
+
+    .section-rule {
+      width: 60px; height: 2px;
+      background: linear-gradient(90deg, var(--red), var(--wine));
+      margin: 1.5rem 0 3rem;
+    }
+
+    /* ── ABOUT ── */
+    .about-layout {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 4rem;
+      align-items: start;
+    }
+
+    @media (max-width: 768px) {
+      .about-layout { grid-template-columns: 1fr; gap: 2rem; }
+    }
+
+    .about-text p {
+      font-size: 1rem;
+      color: #999;
+      margin-bottom: 1.4rem;
+      line-height: 1.9;
+    }
+
+    .about-text p strong { color: #fff; font-weight: 500; }
+    .about-text p em { color: var(--wine3); font-style: italic; }
+
+    .about-side {
+      position: sticky;
+      top: 8rem;
+    }
+
+    .about-card {
+      border: 1px solid var(--border2);
+      padding: 2.5rem;
+      background: var(--card);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .about-card::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0;
+      width: 100%; height: 3px;
+      background: linear-gradient(90deg, var(--red), var(--wine), transparent);
+    }
+
+    .about-card-label {
+      font-family: 'Space Mono', monospace;
+      font-size: 0.55rem;
+      letter-spacing: 0.4em;
+      text-transform: uppercase;
+      color: var(--wine3);
+      margin-bottom: 1.5rem;
+    }
+
+    .about-stat {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      padding: 0.8rem 0;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .about-stat:last-child { border-bottom: none; }
+
+    .about-stat-key {
+      font-family: 'Space Mono', monospace;
+      font-size: 0.65rem;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      color: var(--muted);
+    }
+
+    .about-stat-val {
+      font-family: 'Playfair Display', serif;
+      font-size: 0.95rem;
+      color: #fff;
+      font-style: italic;
+    }
+
+    /* horizontal rule between sections */
+    .section-divider {
+      width: 100%;
+      height: 1px;
+      background: linear-gradient(90deg, transparent, var(--border2), transparent);
+    }
+
+    /* ── HOBBIES ── */
+    .hobbies-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 1px;
+      background: var(--border);
+    }
+
+    .hobby-card {
+      background: var(--card);
+      padding: 2.5rem 2rem;
+      position: relative;
+      overflow: hidden;
+      transition: background 0.4s;
+    }
+
+    .hobby-card::after {
+      content: '';
+      position: absolute;
+      bottom: 0; left: 0;
+      width: 0; height: 2px;
+      background: linear-gradient(90deg, var(--red), var(--wine));
+      transition: width 0.4s ease;
+    }
+
+    .hobby-card:hover { background: #160a0c; }
+    .hobby-card:hover::after { width: 100%; }
+
+    .hobby-num {
+      font-family: 'Space Mono', monospace;
+      font-size: 0.6rem;
+      color: var(--wine3);
+      letter-spacing: 0.2em;
+      margin-bottom: 1.2rem;
+    }
+
+    .hobby-icon {
+      display: block;
+      width: 28px;
+      height: 28px;
+      margin-bottom: 1rem;
+      color: var(--wine3);
+      transition: color 0.3s;
+    }
+
+    .hobby-icon svg {
+      width: 100%;
+      height: 100%;
+    }
+
+    .hobby-card:hover .hobby-icon { color: var(--red); }
+
+    .hobby-card h3 {
+      font-size: 0.9rem;
+      font-weight: 500;
+      color: #fff;
+      letter-spacing: 0.04em;
+      margin-bottom: 0.5rem;
+    }
+
+    .hobby-card p {
+      font-size: 0.78rem;
+      color: var(--muted);
+      line-height: 1.7;
+    }
+
+    /* ── RED FLAGS ── */
+    .redflags-section {
+      background: var(--deep);
+      border-top: 1px solid var(--border);
+      border-bottom: 1px solid var(--border);
+    }
+
+    .redflag-header-row {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      margin-bottom: 3rem;
+    }
+
+    .redflag-badge {
+      display: inline-block;
+      padding: 0.3rem 0.8rem;
+      background: var(--red);
+      color: #fff;
+      font-family: 'Space Mono', monospace;
+      font-size: 0.6rem;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+    }
+
+    .redflag-list { display: flex; flex-direction: column; }
+
+    .redflag-item {
+      display: grid;
+      grid-template-columns: 80px 1fr;
+      gap: 2rem;
+      align-items: stretch;
+      padding: 2.5rem 0;
+      border-bottom: 1px solid var(--border);
+      position: relative;
+      transition: background 0.3s;
+    }
+
+    .redflag-item:hover {
+      background: rgba(192,0,26,0.03);
+    }
+
+    .redflag-left {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+      padding-top: 0.2rem;
+    }
+
+    .redflag-num {
+      font-family: 'Playfair Display', serif;
+      font-size: 3.5rem;
+      font-weight: 900;
+      color: transparent;
+      -webkit-text-stroke: 1px var(--wine2);
+      line-height: 1;
+    }
+
+    .redflag-line {
+      flex: 1;
+      width: 1px;
+      background: linear-gradient(var(--wine), transparent);
+      margin: 0.5rem auto 0;
+    }
+
+    .redflag-right {}
+
+    .redflag-right h3 {
+      font-family: 'Playfair Display', serif;
+      font-size: 1.3rem;
+      font-weight: 700;
+      font-style: italic;
+      color: #fff;
+      margin-bottom: 0.6rem;
+      line-height: 1.3;
+    }
+
+    .redflag-right p {
+      font-size: 0.85rem;
+      color: var(--muted);
+      line-height: 1.8;
+      max-width: 600px;
+    }
+
+    .redflag-warning {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+      font-family: 'Space Mono', monospace;
+      font-size: 0.55rem;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: var(--red);
+      margin-top: 0.8rem;
+    }
+
+    /* ADD MORE PLACEHOLDER */
+    .redflag-placeholder {
+      display: grid;
+      grid-template-columns: 80px 1fr;
+      gap: 2rem;
+      padding: 2.5rem 0;
+      border-bottom: 1px dashed var(--border2);
+      opacity: 0.4;
+    }
+
+    .redflag-placeholder-inner {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      border: 1px dashed var(--border2);
+      padding: 1.5rem;
+      color: var(--muted);
+      font-family: 'Space Mono', monospace;
+      font-size: 0.65rem;
+      letter-spacing: 0.25em;
+      text-transform: uppercase;
+    }
+
+    /* ── WHAT I VALUE ── */
+    .values-list {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .value-item {
+      display: flex;
+      align-items: baseline;
+      gap: 1.2rem;
+      padding: 1.8rem 0;
+      border-bottom: 1px solid var(--border);
+      transition: padding-left 0.4s ease;
+      cursor: pointer;
+      flex-wrap: wrap;
+      position: relative;
+    }
+
+    .value-item:last-child { border-bottom: none; }
+    .value-item:hover { padding-left: 0.6rem; }
+
+    .value-word {
+      font-family: 'Playfair Display', serif;
+      font-size: clamp(1.8rem, 4vw, 3rem);
+      font-weight: 900;
+      color: #fff;
+      line-height: 1;
+      min-width: 260px;
+    }
+
+    .value-word.alt {
+      color: transparent;
+      -webkit-text-stroke: 1px var(--wine3);
+      font-style: italic;
+      min-width: unset;
+      transition: color 0.3s, -webkit-text-stroke 0.3s;
+    }
+
+    .value-item:hover .value-word.alt,
+    .value-item.open .value-word.alt {
+      color: var(--wine3);
+      -webkit-text-stroke: 1px transparent;
+    }
+
+    .value-sep {
+      font-family: 'Space Mono', monospace;
+      font-size: 0.65rem;
+      letter-spacing: 0.3em;
+      text-transform: uppercase;
+      color: var(--red);
+      flex-shrink: 0;
+    }
+
+    .value-arrow {
+      margin-left: auto;
+      font-size: 1rem;
+      color: var(--wine3);
+      transition: transform 0.35s ease, color 0.3s;
+      line-height: 1;
+      align-self: center;
+      padding-bottom: 0.2rem;
+    }
+
+    .value-item.open .value-arrow {
+      transform: rotate(180deg);
+      color: var(--red);
+    }
+
+    .value-desc {
+      width: 100%;
+      max-height: 0;
+      overflow: hidden;
+      transition: max-height 0.5s ease, opacity 0.4s ease, padding 0.4s ease;
+      opacity: 0;
+      font-size: 0.9rem;
+      color: var(--muted);
+      line-height: 1.85;
+      border-left: 2px solid var(--wine);
+      padding-left: 0;
+      margin-top: 0;
+    }
+
+    .value-item.open .value-desc {
+      max-height: 200px;
+      opacity: 1;
+      padding: 1rem 0 0.5rem 1.2rem;
+      margin-top: 0.5rem;
+    }
+
+    @media (max-width: 600px) {
+      .value-word { font-size: 1.5rem; min-width: unset; }
+      .value-item { gap: 0.7rem; }
+    }
+
+    /* ── BOUNDARIES ── */
+    .boundaries-list {
+      display: flex;
+      flex-direction: column;
+      gap: 0;
+    }
+
+    .boundary-item {
+      display: flex;
+      align-items: center;
+      gap: 1.5rem;
+      padding: 1.6rem 0;
+      border-bottom: 1px solid var(--border);
+      position: relative;
+      overflow: hidden;
+      transition: padding-left 0.4s ease;
+      cursor: pointer;
+      flex-wrap: wrap;
+    }
+
+    .boundary-item:last-child { border-bottom: none; }
+
+    .boundary-item::before {
+      content: '';
+      position: absolute;
+      left: 0; top: 0; bottom: 0;
+      width: 0;
+      background: rgba(192,0,26,0.04);
+      transition: width 0.4s ease;
+    }
+
+    .boundary-item:hover { padding-left: 1rem; }
+    .boundary-item:hover::before { width: 100%; }
+
+    .boundary-icon {
+      font-family: 'Playfair Display', serif;
+      font-size: 1.4rem;
+      color: var(--red);
+      flex-shrink: 0;
+      line-height: 1;
+      transition: color 0.3s, transform 0.3s;
+    }
+
+    .boundary-item:hover .boundary-icon {
+      color: var(--wine3);
+      transform: scaleX(1.5);
+      transform-origin: left;
+    }
+
+    .boundary-item p {
+      font-family: 'Playfair Display', serif;
+      font-size: clamp(1.1rem, 2.5vw, 1.5rem);
+      font-style: italic;
+      color: #ccc;
+      line-height: 1.3;
+      transition: color 0.3s;
+      flex: 1;
+    }
+
+    .boundary-item:hover p { color: #fff; }
+    .boundary-item.open p  { color: #fff; }
+
+    .boundary-arrow {
+      margin-left: auto;
+      font-size: 1rem;
+      color: var(--wine3);
+      transition: transform 0.35s ease, color 0.3s;
+      line-height: 1;
+      flex-shrink: 0;
+    }
+
+    .boundary-item.open .boundary-arrow {
+      transform: rotate(180deg);
+      color: var(--red);
+    }
+
+    .boundary-desc {
+      width: 100%;
+      max-height: 0;
+      overflow: hidden;
+      transition: max-height 0.5s ease, opacity 0.4s ease, padding 0.4s ease;
+      opacity: 0;
+      font-size: 0.88rem;
+      color: var(--muted);
+      line-height: 1.85;
+      border-left: 2px solid var(--wine);
+      padding-left: 0;
+      font-family: 'Inter', sans-serif;
+      font-style: normal;
+    }
+
+    .boundary-item.open .boundary-desc {
+      max-height: 200px;
+      opacity: 1;
+      padding: 1rem 0 0.5rem 1.2rem;
+      margin-top: 0.3rem;
+    }
+
+    /* ── QUOTE ── */
+    .quote-section {
+      position: relative;
+      padding: 10rem 2rem;
+      text-align: center;
+      background: var(--black);
+      overflow: hidden;
+    }
+
+    .quote-bg {
+      position: absolute;
+      inset: 0;
+      background:
+        radial-gradient(ellipse 80% 60% at 50% 50%, rgba(107,29,42,0.15) 0%, transparent 70%);
+    }
+
+    .quote-bg-text {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      font-family: 'Playfair Display', serif;
+      font-size: clamp(8rem, 20vw, 18rem);
+      font-weight: 900;
+      color: transparent;
+      -webkit-text-stroke: 1px rgba(107,29,42,0.12);
+      white-space: nowrap;
+      pointer-events: none;
+      user-select: none;
+      line-height: 1;
+    }
+
+    .quote-content { position: relative; z-index: 2; max-width: 800px; margin: 0 auto; }
+
+    .quote-open {
+      font-family: 'Playfair Display', serif;
+      font-size: 8rem;
+      color: var(--wine);
+      line-height: 0.5;
+      opacity: 0.4;
+      display: block;
+      margin-bottom: 1rem;
+    }
+
+    blockquote {
+      font-family: 'Playfair Display', serif;
+      font-size: clamp(1.8rem, 4.5vw, 3rem);
+      font-style: italic;
+      font-weight: 700;
+      color: #fff;
+      line-height: 1.35;
+      margin-bottom: 2rem;
+    }
+
+    .quote-attr {
+      font-family: 'Space Mono', monospace;
+      font-size: 0.7rem;
+      letter-spacing: 0.4em;
+      text-transform: uppercase;
+      color: var(--wine3);
+    }
+
+    .quote-attr::before {
+      content: '— ';
+      color: var(--muted);
+    }
+
+    /* ── SOCIALS ── */
+    .socials-section {
+      position: relative;
+      padding: 8rem 2rem;
+      max-width: 1100px;
+      margin: 0 auto;
+      text-align: center;
+    }
+
+    .socials-row {
+      display: flex;
+      justify-content: center;
+      gap: 2rem;
+      flex-wrap: wrap;
+      margin-top: 3rem;
+    }
+
+    .social-link {
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 1.2rem;
+      padding: 3rem 3.5rem;
+      background: var(--card);
+      border: 1px solid var(--border2);
+      color: var(--text);
+      text-decoration: none;
+      overflow: hidden;
+      transition: border-color 0.4s, transform 0.3s;
+      min-width: 200px;
+    }
+
+    .social-link::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(135deg, rgba(192,0,26,0.08), rgba(107,29,42,0.08));
+      opacity: 0;
+      transition: opacity 0.4s;
+    }
+
+    .social-link::after {
+      content: '';
+      position: absolute;
+      bottom: 0; left: 0;
+      width: 100%; height: 2px;
+      background: linear-gradient(90deg, var(--red), var(--wine));
+      transform: scaleX(0);
+      transition: transform 0.4s ease;
+    }
+
+    .social-link:hover {
+      border-color: var(--wine2);
+      transform: translateY(-4px);
+    }
+
+    .social-link:hover::before { opacity: 1; }
+    .social-link:hover::after { transform: scaleX(1); }
+
+    .social-icon-wrap {
+      width: 52px; height: 52px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border: 1px solid var(--border2);
+      border-radius: 50%;
+      transition: border-color 0.4s, background 0.4s;
+    }
+
+    .social-link:hover .social-icon-wrap {
+      border-color: var(--wine2);
+      background: rgba(107,29,42,0.2);
+    }
+
+    .social-icon-wrap svg {
+      width: 22px; height: 22px;
+      fill: var(--wine3);
+      transition: fill 0.3s;
+    }
+
+    .social-link:hover .social-icon-wrap svg { fill: var(--red2); }
+
+    .social-platform {
+      font-family: 'Space Mono', monospace;
+      font-size: 0.55rem;
+      letter-spacing: 0.4em;
+      text-transform: uppercase;
+      color: var(--wine3);
+    }
+
+    .social-handle {
+      font-family: 'Playfair Display', serif;
+      font-size: 1rem;
+      font-style: italic;
+      color: #fff;
+    }
+
+    /* ── FOOTER ── */
+    .footer {
+      border-top: 1px solid var(--border);
+      padding: 2.5rem 3rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 1rem;
+    }
+
+    .footer-left {
+      font-family: 'Space Mono', monospace;
+      font-size: 0.6rem;
+      letter-spacing: 0.25em;
+      text-transform: uppercase;
+      color: var(--muted);
+    }
+
+    .footer-right {
+      font-family: 'Space Mono', monospace;
+      font-size: 0.6rem;
+      letter-spacing: 0.25em;
+      text-transform: uppercase;
+      color: var(--border2);
+    }
+
+    /* ── REVEAL ANIMATIONS ── */
+    .reveal {
+      opacity: 0;
+      transform: translateY(30px);
+      transition: opacity 0.8s ease, transform 0.8s ease;
+    }
+
+    .reveal.visible {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    .reveal-delay-1 { transition-delay: 0.1s; }
+    .reveal-delay-2 { transition-delay: 0.2s; }
+    .reveal-delay-3 { transition-delay: 0.3s; }
+    .reveal-delay-4 { transition-delay: 0.4s; }
+    .reveal-delay-5 { transition-delay: 0.5s; }
+
+    @media (max-width: 600px) {
+      nav { padding: 1.2rem 1.5rem; }
+      .nav-links { display: none; }
+      .section-number { display: none; }
+      .redflag-item { grid-template-columns: 50px 1fr; gap: 1rem; }
+      .redflag-num { font-size: 2.5rem; }
+      .footer { flex-direction: column; text-align: center; }
+      body { cursor: auto; }
+      .cursor, .cursor-ring { display: none; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- LOADER -->
+  <div id="loader">
+    <div class="loader-name" id="loaderName"></div>
+    <div class="loader-bar-wrap">
+      <div class="loader-bar"></div>
+    </div>
+    <div style="display:flex;flex-direction:column;align-items:center;gap:0.5rem;">
+      <span class="loader-label">loading</span>
+      <span class="loader-counter" id="loaderCounter">0%</span>
+    </div>
+  </div>
+
+  <!-- CURSOR -->
+  <div class="cursor" id="cursor"></div>
+  <div class="cursor-ring" id="cursorRing"></div>
+
+  <!-- NAV -->
+  <nav id="nav">
+    <a href="#" class="nav-logo">R<span>.</span>I</a>
+    <ul class="nav-links">
+      <li><a href="#about">About</a></li>
+      <li><a href="#hobbies">Hobbies</a></li>
+      <li><a href="#redflags">Who I Am</a></li>
+      <li><a href="#values">What I Value</a></li>
+      <li><a href="#boundaries">Boundaries</a></li>
+      <li><a href="YOUR_PORTFOLIO_LINK_HERE" target="_blank" rel="noopener noreferrer" class="nav-portfolio">Portfolio ↗</a></li>
+      <li><a href="#contact">Links</a></li>
+    </ul>
+    <button class="nav-hamburger" id="hamburger" aria-label="Open menu">
+      <span></span><span></span><span></span>
+    </button>
+  </nav>
+
+  <!-- MOBILE MENU -->
+  <div class="nav-mobile" id="mobileMenu">
+    <a class="nav-mobile-link" href="#about"    data-mobile-link><span class="nav-mobile-num">01</span>About</a>
+    <a class="nav-mobile-link" href="#hobbies"  data-mobile-link><span class="nav-mobile-num">02</span>Hobbies</a>
+    <a class="nav-mobile-link" href="#redflags" data-mobile-link><span class="nav-mobile-num">03</span>Who I Am</a>
+    <a class="nav-mobile-link" href="#values"      data-mobile-link><span class="nav-mobile-num">04</span>What I Value</a>
+    <a class="nav-mobile-link" href="#boundaries"  data-mobile-link><span class="nav-mobile-num">05</span>Boundaries</a>
+    <a class="nav-mobile-link" href="YOUR_PORTFOLIO_LINK_HERE" target="_blank" rel="noopener noreferrer"><span class="nav-mobile-num">06</span>Portfolio ↗</a>
+    <a class="nav-mobile-link" href="#contact"     data-mobile-link><span class="nav-mobile-num">07</span>Links</a>
+    <span class="nav-mobile-footer">Lorenz Imperial &nbsp;·&nbsp; R.I.</span>
+  </div>
+
+  <!-- HERO -->
+  <section class="hero">
+    <div class="hero-bg-lines"></div>
+    <div class="hero-glow"></div>
+    <div class="hero-content">
+      <p class="hero-eyebrow">Lorenz Imperial</p>
+      <h1 class="hero-name">
+        <span class="line1">Renz</span>
+        <span class="line2">Imperial<span class="red-dot">.</span></span>
+      </h1>
+      <p class="hero-tagline">Just existing &nbsp;<span>/</span>&nbsp; doing it my way</p>
+    </div>
+    <div class="hero-scroll">
+      <div class="hero-scroll-line"></div>
+      <span class="hero-scroll-text">scroll</span>
+    </div>
+  </section>
+
+  <div class="section-divider"></div>
+
+  <!-- ABOUT -->
+  <div id="about">
+    <div class="section-wrap">
+      <span class="section-number">01</span>
+      <p class="section-tag reveal">001 &nbsp;/&nbsp; About</p>
+      <h2 class="reveal reveal-delay-1">Who Is Renz?</h2>
+      <div class="section-rule reveal reveal-delay-2"></div>
+      <div class="about-layout">
+        <div class="about-text">
+          <p class="reveal reveal-delay-2">
+            <strong>Lorenz Imperial.</strong> Renz, if you've earned that.
+            I don't hand out introductions like they're free — if you need
+            a paragraph to figure me out, you're already overthinking it.
+          </p>
+          <p class="reveal reveal-delay-3">
+            I move at my own pace. I show up when I want to,
+            disappear when I need to, and I don't owe anyone an explanation
+            for either. <em>That's just how it is.</em>
+          </p>
+          <p class="reveal reveal-delay-3">
+            People mistake my silence for coldness. It's not.
+            It's selection. I'd rather sit alone in quiet
+            than be surrounded by noise that means nothing.
+          </p>
+          <p class="reveal reveal-delay-4">
+            I build things, I drive at 2am, I wander into places I've never been,
+            and I sit with my thoughts longer than most people are comfortable with.
+            I don't need much — I just need the <em>right</em> things.
+          </p>
+        </div>
+        <div class="about-side reveal reveal-delay-3">
+          <div class="about-card">
+            <p class="about-card-label">// quick.profile</p>
+            <div class="about-stat">
+              <span class="about-stat-key">Name</span>
+              <span class="about-stat-val">Lorenz Imperial</span>
+            </div>
+            <div class="about-stat">
+              <span class="about-stat-key">Goes by</span>
+              <span class="about-stat-val">Renz</span>
+            </div>
+            <div class="about-stat">
+              <span class="about-stat-key">Vibe</span>
+              <span class="about-stat-val">Selective</span>
+            </div>
+            <div class="about-stat">
+              <span class="about-stat-key">Status</span>
+              <span class="about-stat-val">Active, on my terms</span>
+            </div>
+            <div class="about-stat">
+              <span class="about-stat-key">Operating hours</span>
+              <span class="about-stat-val">Unpredictable</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="section-divider"></div>
+
+  <!-- HOBBIES -->
+  <div id="hobbies">
+    <div class="section-wrap">
+      <span class="section-number">02</span>
+      <p class="section-tag reveal">002 &nbsp;/&nbsp; Hobbies</p>
+      <h2 class="reveal reveal-delay-1">What I Actually Do</h2>
+      <div class="section-rule reveal reveal-delay-2"></div>
+      <div class="hobbies-grid">
+        <div class="hobby-card reveal reveal-delay-1">
+          <span class="hobby-num">01</span>
+          <span class="hobby-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="2" y="6" width="20" height="12" rx="2"/>
+              <path d="M12 12h.01M8 9v6M6 12h4M16 10h2M16 14h2"/>
+            </svg>
+          </span>
+          <h3>Video Games</h3>
+          <p>My kind of escape. No small talk, just strategy, chaos, and the satisfaction of winning on my terms.</p>
+        </div>
+        <div class="hobby-card reveal reveal-delay-2">
+          <span class="hobby-num">02</span>
+          <span class="hobby-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="12" cy="12" r="10"/>
+              <path d="M2 12h20M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/>
+            </svg>
+          </span>
+          <h3>Travel</h3>
+          <p>New places, unfamiliar streets, no plan. I move to feel free — being somewhere no one knows me hits different.</p>
+        </div>
+        <div class="hobby-card reveal reveal-delay-3">
+          <span class="hobby-num">03</span>
+          <span class="hobby-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
+            </svg>
+          </span>
+          <h3>Late Night Walks</h3>
+          <p>When the city quiets down is when I actually hear myself think. Everything feels more honest at 3am.</p>
+        </div>
+        <div class="hobby-card reveal reveal-delay-4">
+          <span class="hobby-num">04</span>
+          <span class="hobby-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M5 17H3a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11a2 2 0 0 1 2 2v3"/>
+              <rect x="9" y="11" width="14" height="10" rx="1"/>
+              <circle cx="12" cy="16" r="1"/><circle cx="20" cy="16" r="1"/>
+            </svg>
+          </span>
+          <h3>Late Night Drives</h3>
+          <p>Windows down, music up, no destination. I drive like I can respawn — fast, free, and completely unbothered.</p>
+        </div>
+        <div class="hobby-card reveal reveal-delay-5">
+          <span class="hobby-num">05</span>
+          <span class="hobby-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round">
+              <polyline points="16 18 22 12 16 6"/>
+              <polyline points="8 6 2 12 8 18"/>
+            </svg>
+          </span>
+          <h3>Creating Websites</h3>
+          <p>I build things from nothing. Code is one of the few things I'm actually patient with. The blank page doesn't bother me.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="section-divider"></div>
+
+  <!-- RED FLAGS -->
+  <div id="redflags" class="redflags-section">
+    <div class="section-wrap">
+      <span class="section-number">03</span>
+      <div class="redflag-header-row">
+        <p class="section-tag reveal" style="margin-bottom:0;">003 &nbsp;/&nbsp; Who I Am</p>
+        <span class="redflag-badge reveal reveal-delay-1">⚠ fair warning</span>
+      </div>
+      <h2 class="reveal reveal-delay-1">Who I Am.</h2>
+      <div class="section-rule reveal reveal-delay-2"></div>
+
+      <div class="redflag-list">
+
+        <!-- FLAG 01 -->
+        <div class="redflag-item reveal">
+          <div class="redflag-left">
+            <span class="redflag-num">01</span>
+            <div class="redflag-line"></div>
+          </div>
+          <div class="redflag-right">
+            <h3>I disappear when I feel overwhelmed.</h3>
+            <p>
+              No warning. No explanation. When things get too heavy,
+              I shut down and pull back — not to hurt you, but because
+              it's the only way I know how to handle it.
+              I'll come back when I've processed it. Just don't make me
+              feel guilty for needing that.
+            </p>
+            <span class="redflag-warning">⚠ &nbsp; don't chase, just wait</span>
+          </div>
+        </div>
+
+        <!-- ADD MORE RED FLAGS BELOW THIS COMMENT -->
+
+        <!-- FLAG 02 -->
+        <div class="redflag-item reveal">
+          <div class="redflag-left">
+            <span class="redflag-num">02</span>
+            <div class="redflag-line"></div>
+          </div>
+          <div class="redflag-right">
+            <h3>Prefers being alone most of the time.</h3>
+            <p>
+              Don't take it personally — solitude isn't a punishment,
+              it's just where I recharge. I function better alone than
+              I do in a crowd. If you need constant company to feel secure,
+              we're going to exhaust each other.
+            </p>
+            <span class="redflag-warning">⚠ &nbsp; don't force the presence</span>
+          </div>
+        </div>
+
+        <!-- FLAG 03 -->
+        <div class="redflag-item reveal">
+          <div class="redflag-left">
+            <span class="redflag-num">03</span>
+            <div class="redflag-line"></div>
+          </div>
+          <div class="redflag-right">
+            <h3>Still give my all, even when it costs me.</h3>
+            <p>
+              I know when something is draining me. I see it coming.
+              And I still show up fully anyway — because half-effort
+              isn't something I'm capable of when I actually care.
+              It's not a flex. It's a flaw I've made peace with.
+            </p>
+            <span class="redflag-warning">⚠ &nbsp; don't mistake it for weakness</span>
+          </div>
+        </div>
+
+        <!-- FLAG 04 -->
+        <div class="redflag-item reveal">
+          <div class="redflag-left">
+            <span class="redflag-num">04</span>
+            <div class="redflag-line"></div>
+          </div>
+          <div class="redflag-right">
+            <h3>I stay quiet and observe everything.</h3>
+            <p>
+              I don't talk much in a room — but I notice everything.
+              The way people act, what they don't say, how they carry themselves.
+              Silence isn't emptiness for me. It's data.
+              By the time I speak, I already know more than you think.
+            </p>
+            <span class="redflag-warning">⚠ &nbsp; nothing gets past me</span>
+          </div>
+        </div>
+
+        <!-- FLAG 05 -->
+        <div class="redflag-item reveal">
+          <div class="redflag-left">
+            <span class="redflag-num">05</span>
+            <div class="redflag-line"></div>
+          </div>
+          <div class="redflag-right">
+            <h3>I choose peace over explaining myself.</h3>
+            <p>
+              If I have to convince you of my worth or defend every decision I make,
+              I'd rather just go quiet. I don't argue to win — I disengage to survive.
+              My peace isn't up for debate, and I won't lose it
+              just to make someone else comfortable with who I am.
+            </p>
+            <span class="redflag-warning">⚠ &nbsp; don't expect a debate</span>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <div class="section-divider"></div>
+
+  <!-- WHAT I VALUE -->
+  <div id="values">
+    <div class="section-wrap">
+      <span class="section-number">04</span>
+      <p class="section-tag reveal">004 &nbsp;/&nbsp; What I Value</p>
+      <h2 class="reveal reveal-delay-1">What I Value</h2>
+      <div class="section-rule reveal reveal-delay-2"></div>
+      <div class="values-list">
+
+        <div class="value-item reveal" data-desc="Not just the absence of noise — peace is the standard everything else gets measured against. If something consistently disturbs it, it doesn't belong in my life. Simple as that.">
+          <span class="value-word">Peace</span>
+          <span class="value-sep">over</span>
+          <span class="value-word alt">Everything.</span>
+          <span class="value-arrow">↓</span>
+        </div>
+
+        <div class="value-item reveal reveal-delay-1" data-desc="I'd rather hear something that hurts than be handed a comfortable lie. Truth is the only foundation worth building on. Everything else is just a house of cards waiting to fall.">
+          <span class="value-word">Truth</span>
+          <span class="value-sep">over</span>
+          <span class="value-word alt">Comfort.</span>
+          <span class="value-arrow">↓</span>
+        </div>
+
+        <div class="value-item reveal reveal-delay-2" data-desc="I don't need applause. I don't perform for a crowd. What I need is for the people around me to actually see me — not the version of me that's convenient for them.">
+          <span class="value-word">Respect</span>
+          <span class="value-sep">over</span>
+          <span class="value-word alt">Attention.</span>
+          <span class="value-arrow">↓</span>
+        </div>
+
+        <div class="value-item reveal reveal-delay-3" data-desc="Don't push me into a corner and expect warmth. I open up on my own terms, at my own pace. Pressure doesn't speed that up — it shuts it down completely.">
+          <span class="value-word">Space</span>
+          <span class="value-sep">over</span>
+          <span class="value-word alt">Pressure.</span>
+          <span class="value-arrow">↓</span>
+        </div>
+
+        <div class="value-item reveal reveal-delay-4" data-desc="I don't need a lot. I need the right things. Clutter — whether it's people, noise, or obligations — drains me. Strip it back and what's left actually means something.">
+          <span class="value-word">Simplicity</span>
+          <span class="value-sep">over</span>
+          <span class="value-word alt">Excess.</span>
+          <span class="value-arrow">↓</span>
+        </div>
+
+        <div class="value-item reveal reveal-delay-5" data-desc="I don't do fair-weather. If I'm with you, I'm with you — through the boring parts, the ugly parts, all of it. I just expect the same back. Without that, what's the point.">
+          <span class="value-word">Loyalty</span>
+          <span class="value-sep">over</span>
+          <span class="value-word alt">Convenience.</span>
+          <span class="value-arrow">↓</span>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <div class="section-divider"></div>
+
+  <!-- BOUNDARIES -->
+  <div id="boundaries">
+    <div class="section-wrap">
+      <span class="section-number">05</span>
+      <p class="section-tag reveal">005 &nbsp;/&nbsp; Boundaries</p>
+      <h2 class="reveal reveal-delay-1">Boundaries</h2>
+      <div class="section-rule reveal reveal-delay-2"></div>
+      <div class="boundaries-list">
+
+        <div class="boundary-item reveal" data-desc="Energy is not infinite. If being somewhere or around someone consistently leaves me emptier than when I arrived, I leave — no guilt, no lengthy goodbye. My presence is a choice, not an obligation.">
+          <span class="boundary-icon">—</span>
+          <p>I don't stay where I feel drained.</p>
+          <span class="boundary-arrow">↓</span>
+        </div>
+
+        <div class="boundary-item reveal reveal-delay-1" data-desc="Some things click naturally. Some things don't. I'm not going to bend myself trying to make something work that was never meant to. If it needs that much effort just to exist, it's not real.">
+          <span class="boundary-icon">—</span>
+          <p>I don't force connections.</p>
+          <span class="boundary-arrow">↓</span>
+        </div>
+
+        <div class="boundary-item reveal reveal-delay-2" data-desc="I'll say it once, clearly. If you don't get it or choose not to, that's on you — not me. I'm not going to repeat myself until you're satisfied. My words aren't up for debate.">
+          <span class="boundary-icon">—</span>
+          <p>I don't explain myself more than once.</p>
+          <span class="boundary-arrow">↓</span>
+        </div>
+
+        <div class="boundary-item reveal reveal-delay-3" data-desc="When things pile up, I don't push through and pretend I'm fine. I pull back, reset, and come back when I'm ready. That's not running away — that's knowing myself well enough to not fall apart.">
+          <span class="boundary-icon">—</span>
+          <p>I step away when I need space.</p>
+          <span class="boundary-arrow">↓</span>
+        </div>
+
+        <div class="boundary-item reveal reveal-delay-4" data-desc="Not everyone gets close. Some people stay at arm's length and that's exactly where they belong. Distance isn't always coldness — sometimes it's the most honest thing I can give.">
+          <span class="boundary-icon">—</span>
+          <p>I keep my distance when necessary.</p>
+          <span class="boundary-arrow">↓</span>
+        </div>
+
+        <div class="boundary-item reveal reveal-delay-5" data-desc="I won't announce it. I won't ask for permission. When something threatens my peace, I move — quietly, swiftly, and without looking back. My peace isn't up for negotiation.">
+          <span class="boundary-icon">—</span>
+          <p>I protect my peace without warning.</p>
+          <span class="boundary-arrow">↓</span>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <div class="section-divider"></div>
+
+  <!-- QUOTE -->
+  <section class="quote-section">
+    <div class="quote-bg"></div>
+    <div class="quote-bg-text">peace</div>
+    <div class="quote-content">
+      <span class="quote-open reveal">"</span>
+      <blockquote class="reveal reveal-delay-1">
+        The less I care,<br>the more peace I find.
+      </blockquote>
+      <p class="quote-attr reveal reveal-delay-2">Renz</p>
+    </div>
+  </section>
+
+  <div class="section-divider"></div>
+
+  <!-- SOCIALS -->
+  <div id="contact">
+    <div class="socials-section">
+      <p class="section-tag reveal">005 &nbsp;/&nbsp; Links</p>
+      <h2 class="reveal reveal-delay-1">Links</h2>
+      <div class="section-rule reveal reveal-delay-2" style="margin: 1.5rem auto 0;"></div>
+      <div class="socials-row">
+
+        <a class="social-link reveal reveal-delay-2" href="https://www.facebook.com/profile.php?id=61578868599901" target="_blank" rel="noopener noreferrer">
+          <span class="social-platform">Facebook</span>
+          <div class="social-icon-wrap">
+            <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+              <path d="M24 12.073C24 5.405 18.627 0 12 0S0 5.405 0 12.073C0 18.1 4.388 23.094 10.125 24v-8.437H7.078v-3.49h3.047V9.41c0-3.025 1.792-4.697 4.533-4.697 1.312 0 2.686.236 2.686.236v2.97h-1.513c-1.491 0-1.956.93-1.956 1.886v2.267h3.328l-.532 3.49h-2.796V24C19.612 23.094 24 18.1 24 12.073z"/>
+            </svg>
+          </div>
+          <span class="social-handle">lorenz imperial</span>
+        </a>
+
+        <a class="social-link reveal reveal-delay-3" href="https://www.instagram.com/itz.not.renz?igsh=aDZveGo2M2F2OTgz" target="_blank" rel="noopener noreferrer">
+          <span class="social-platform">Instagram</span>
+          <div class="social-icon-wrap">
+            <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+              <path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zM12 0C8.741 0 8.333.014 7.053.072 2.695.272.273 2.69.073 7.052.014 8.333 0 8.741 0 12c0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98C8.333 23.986 8.741 24 12 24c3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98C15.668.014 15.259 0 12 0zm0 5.838a6.162 6.162 0 100 12.324 6.162 6.162 0 000-12.324zM12 16a4 4 0 110-8 4 4 0 010 8zm6.406-11.845a1.44 1.44 0 100 2.881 1.44 1.44 0 000-2.881z"/>
+            </svg>
+          </div>
+          <span class="social-handle">itz.not.renz</span>
+        </a>
+
+        <a class="social-link reveal reveal-delay-4" href="https://c20257071imperial-sudo.github.io/Renz.portfolio/" target="_blank" rel="noopener noreferrer">
+          <span class="social-platform">Portfolio</span>
+          <div class="social-icon-wrap">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/>
+              <polyline points="15 3 21 3 21 9"/>
+              <line x1="10" y1="14" x2="21" y2="3"/>
+            </svg>
+          </div>
+          <span class="social-handle">view work ↗</span>
+        </a>
+
+      </div>
+    </div>
+  </div>
+
+  <!-- FOOTER -->
+  <footer class="footer">
+    <span class="footer-left">&copy; 2026 &nbsp;·&nbsp; Lorenz Imperial</span>
+    <span class="footer-right">built cold &nbsp;·&nbsp; renz</span>
+  </footer>
+
+  <script>
+    // ── LOADER ──
+    (function() {
+      const loader = document.getElementById('loader');
+      const nameEl = document.getElementById('loaderName');
+      const counter = document.getElementById('loaderCounter');
+
+      // animate name letter by letter
+      const name = 'Lorenz Imperial.';
+      name.split('').forEach((ch, i) => {
+        const span = document.createElement('span');
+        span.textContent = ch === ' ' ? '\u00A0' : ch;
+        if (ch === '.' || ch === 'I') span.classList.add('red');
+        span.style.animationDelay = (0.05 + i * 0.045) + 's';
+        nameEl.appendChild(span);
+      });
+
+      // count up
+      let count = 0;
+      const countInterval = setInterval(() => {
+        count += Math.floor(Math.random() * 8) + 2;
+        if (count >= 100) { count = 100; clearInterval(countInterval); }
+        counter.textContent = count + '%';
+      }, 60);
+
+      // hide after animation
+      window.addEventListener('load', () => {
+        setTimeout(() => {
+          loader.classList.add('hidden');
+          document.body.style.overflow = '';
+        }, 2200);
+      });
+
+      // lock scroll while loading
+      document.body.style.overflow = 'hidden';
+    })();
+
+    // ── NAV SCROLL + ACTIVE + HAMBURGER ──
+    const navEl = document.getElementById('nav');
+    const hamburger = document.getElementById('hamburger');
+    const mobileMenu = document.getElementById('mobileMenu');
+
+    // scroll style
+    window.addEventListener('scroll', () => {
+      navEl.classList.toggle('scrolled', window.scrollY > 40);
+
+      // active link highlight
+      const sections = ['about','hobbies','redflags','values','boundaries','contact'];
+      let current = '';
+      sections.forEach(id => {
+        const el = document.getElementById(id);
+        if (el && window.scrollY >= el.offsetTop - 120) current = id;
+      });
+      document.querySelectorAll('.nav-links a').forEach(a => {
+        a.classList.toggle('active', a.getAttribute('href') === '#' + current);
+      });
+    });
+
+    // hamburger toggle
+    hamburger.addEventListener('click', () => {
+      const isOpen = hamburger.classList.toggle('open');
+      mobileMenu.classList.toggle('open', isOpen);
+      document.body.style.overflow = isOpen ? 'hidden' : '';
+    });
+
+    // close on mobile link click
+    document.querySelectorAll('[data-mobile-link]').forEach(link => {
+      link.addEventListener('click', () => {
+        hamburger.classList.remove('open');
+        mobileMenu.classList.remove('open');
+        document.body.style.overflow = '';
+      });
+    });
+
+    // ── BOUNDARY ITEMS CLICK TO EXPAND ──
+    document.querySelectorAll('.boundary-item').forEach(item => {
+      const desc = document.createElement('p');
+      desc.className = 'boundary-desc';
+      desc.textContent = item.getAttribute('data-desc');
+      item.appendChild(desc);
+
+      item.addEventListener('click', () => {
+        const isOpen = item.classList.contains('open');
+        document.querySelectorAll('.boundary-item.open').forEach(el => el.classList.remove('open'));
+        if (!isOpen) item.classList.add('open');
+      });
+    });
+
+    // ── VALUE ITEMS CLICK TO EXPAND ──
+    document.querySelectorAll('.value-item').forEach(item => {
+      // inject desc element from data attribute
+      const desc = document.createElement('p');
+      desc.className = 'value-desc';
+      desc.textContent = item.getAttribute('data-desc');
+      item.appendChild(desc);
+
+      item.addEventListener('click', () => {
+        const isOpen = item.classList.contains('open');
+        // close all others
+        document.querySelectorAll('.value-item.open').forEach(el => el.classList.remove('open'));
+        if (!isOpen) item.classList.add('open');
+      });
+    });
+
+    // ── CUSTOM CURSOR ──
+    const cursor = document.getElementById('cursor');
+    const ring = document.getElementById('cursorRing');
+    let mx = 0, my = 0, rx = 0, ry = 0;
+
+    document.addEventListener('mousemove', e => {
+      mx = e.clientX; my = e.clientY;
+      cursor.style.left = mx + 'px';
+      cursor.style.top  = my + 'px';
+    });
+
+    (function animRing() {
+      rx += (mx - rx) * 0.12;
+      ry += (my - ry) * 0.12;
+      ring.style.left = rx + 'px';
+      ring.style.top  = ry + 'px';
+      requestAnimationFrame(animRing);
+    })();
+
+    document.querySelectorAll('a, button, .hobby-card, .redflag-item').forEach(el => {
+      el.addEventListener('mouseenter', () => {
+        cursor.style.width = '18px';
+        cursor.style.height = '18px';
+        ring.style.width = '54px';
+        ring.style.height = '54px';
+        ring.style.opacity = '1';
+      });
+      el.addEventListener('mouseleave', () => {
+        cursor.style.width = '10px';
+        cursor.style.height = '10px';
+        ring.style.width = '36px';
+        ring.style.height = '36px';
+        ring.style.opacity = '0.6';
+      });
+    });
+
+    // ── SCROLL REVEAL ──
+    const reveals = document.querySelectorAll('.reveal');
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach(e => {
+        if (e.isIntersecting) {
+          e.target.classList.add('visible');
+          observer.unobserve(e.target);
+        }
+      });
+    }, { threshold: 0.12 });
+
+    reveals.forEach(el => observer.observe(el));
+
+    // ── HERO NAME GLITCH ON LOAD ──
+    const heroName = document.querySelector('.hero-name .line2');
+    if (heroName) {
+      const original = heroName.textContent;
+      const chars = '!@#$%^&*<>/?';
+      let iter = 0;
+      const glitch = setInterval(() => {
+        heroName.textContent = original.split('').map((c, i) => {
+          if (i < iter) return original[i];
+          return chars[Math.floor(Math.random() * chars.length)];
+        }).join('');
+        if (iter >= original.length) clearInterval(glitch);
+        iter += 0.5;
+      }, 40);
+    }
+  </script>
+</body>
+</html>
